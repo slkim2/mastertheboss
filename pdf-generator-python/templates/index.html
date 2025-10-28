@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Generator - URL to PDF Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .options-toggle {
+            background: #f5f5f5;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            transition: background 0.3s;
+        }
+
+        .options-toggle:hover {
+            background: #e8e8e8;
+        }
+
+        .advanced-options {
+            display: none;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .advanced-options.show {
+            display: block;
+        }
+
+        .checkbox-group {
+            margin: 10px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        button[type="submit"]:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .message.success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .example-urls {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .example-urls a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+
+        .example-urls a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PDF Generator</h1>
+        <p class="subtitle">웹 페이지를 PDF로 변환하세요</p>
+
+        <form id="pdfForm">
+            <div class="form-group">
+                <label for="url">웹 페이지 URL</label>
+                <input
+                    type="text"
+                    id="url"
+                    name="url"
+                    placeholder="https://example.com"
+                    required
+                >
+                <div class="example-urls">
+                    예제:
+                    <a href="#" onclick="setExampleUrl('https://www.wikipedia.org'); return false;">Wikipedia</a>
+                    <a href="#" onclick="setExampleUrl('https://github.com'); return false;">GitHub</a>
+                    <a href="#" onclick="setExampleUrl('https://www.google.com'); return false;">Google</a>
+                </div>
+            </div>
+
+            <button type="button" class="options-toggle" onclick="toggleOptions()">
+                고급 옵션 ▼
+            </button>
+
+            <div id="advancedOptions" class="advanced-options">
+                <div class="form-group">
+                    <label for="format">페이지 크기</label>
+                    <select id="format" name="format">
+                        <option value="A4">A4</option>
+                        <option value="Letter">Letter</option>
+                        <option value="Legal">Legal</option>
+                        <option value="A3">A3</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="printBackground" name="printBackground" checked>
+                    <label for="printBackground" style="display: inline;">배경 인쇄</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="marginTop">여백 (cm)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="text" id="marginTop" placeholder="위: 1" value="1">
+                        <input type="text" id="marginRight" placeholder="오른쪽: 1" value="1">
+                        <input type="text" id="marginBottom" placeholder="아래: 1" value="1">
+                        <input type="text" id="marginLeft" placeholder="왼쪽: 1" value="1">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">PDF 생성 및 다운로드</button>
+        </form>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>PDF를 생성하고 있습니다...</p>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        function toggleOptions() {
+            const options = document.getElementById('advancedOptions');
+            options.classList.toggle('show');
+            const button = document.querySelector('.options-toggle');
+            button.textContent = options.classList.contains('show')
+                ? '고급 옵션 ▲'
+                : '고급 옵션 ▼';
+        }
+
+        function setExampleUrl(url) {
+            document.getElementById('url').value = url;
+        }
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = 'message show ' + type;
+
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const submitBtn = document.querySelector('button[type="submit"]');
+
+            if (show) {
+                loading.classList.add('show');
+                submitBtn.disabled = true;
+            } else {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('pdfForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const url = document.getElementById('url').value.trim();
+
+            if (!url) {
+                showMessage('URL을 입력해주세요.', 'error');
+                return;
+            }
+
+            // 옵션 수집
+            const options = {
+                format: document.getElementById('format').value,
+                print_background: document.getElementById('printBackground').checked,
+                margin_top: document.getElementById('marginTop').value + 'cm',
+                margin_right: document.getElementById('marginRight').value + 'cm',
+                margin_bottom: document.getElementById('marginBottom').value + 'cm',
+                margin_left: document.getElementById('marginLeft').value + 'cm'
+            };
+
+            showLoading(true);
+            document.getElementById('message').classList.remove('show');
+
+            try {
+                const response = await fetch('/api/generate-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url, options })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'PDF 생성 실패');
+                }
+
+                // PDF 파일 다운로드
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+
+                // Content-Disposition 헤더에서 파일명 추출
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'download.pdf';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = filenameMatch[1].replace(/['"]/g, '');
+                    }
+                }
+
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+
+                showMessage('PDF가 성공적으로 생성되었습니다!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('오류: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
